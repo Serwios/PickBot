@@ -23,13 +23,17 @@ public class TemplateGenerator {
 
         return response.toString();
     }
+
     public String parseRoundsToResponseTemplate(List<Round> roundOrderedDesc) {
         final StringBuilder response = new StringBuilder("Раунди:\n");
-        roundOrderedDesc.forEach(round ->
-                response.append(round.getId()).append(". ")
-                        .append(round.getName()).append(" - ")
-                        .append(round.getStatus()).append("\n")
-        );
+
+        for (int i = 0; i < roundOrderedDesc.size(); i++) {
+            Round round = roundOrderedDesc.get(i);
+            int ordinalIndex = i + 1;
+            response.append(ordinalIndex).append(". ")
+                    .append(round.getName()).append(" - ")
+                    .append(round.getStatus()).append("\n");
+        }
 
         return response.toString();
     }

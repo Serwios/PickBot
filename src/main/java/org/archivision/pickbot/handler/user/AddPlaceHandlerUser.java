@@ -31,7 +31,7 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
             return BotResponse.of(update.getMessage().getChatId(), "Використання: /add <місце>");
         }
 
-        final String placeName = normalizePlaceName(String.join(" ", Arrays.copyOfRange(args, 1, args.length)));
+        final String placeName = toCamelCase(normalizePlaceName(String.join(" ", Arrays.copyOfRange(args, 1, args.length))));
 
         if (placeName.isEmpty()) {
             return BotResponse.of(update.getMessage().getChatId(), "Місце не може бути порожнім або складатися лише з пробілів");
@@ -52,7 +52,7 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
         }
 
         for (Place existingPlace : existingPlaces) {
-            String existingPlaceName = normalizePlaceName(existingPlace.getName());
+            String existingPlaceName = toCamelCase(normalizePlaceName(existingPlace.getName()));
             if (levenshteinComparator.compare(existingPlaceName, placeName)) {
                 return BotResponse.of(update.getMessage().getChatId(), "Місце з подібною назвою '" + placeName + "' вже існує в цьому раунді");
             }
@@ -71,6 +71,20 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
 
     private String normalizePlaceName(String placeName) {
         return placeName.trim().replaceAll("\\s+", " ");
+    }
+
+    private String toCamelCase(String input) {
+        String[] words = input.split("\\s+");
+        StringBuilder camelCaseString = new StringBuilder();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                camelCaseString.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1));
+            }
+        }
+
+        return camelCaseString.toString();
     }
 
     @Override

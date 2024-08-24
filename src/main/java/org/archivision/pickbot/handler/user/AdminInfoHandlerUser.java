@@ -11,8 +11,10 @@ public class AdminInfoHandlerUser implements UserCommandHandler {
     public BotResponse handle(Update update, String[] args, Long chatId) {
         final String response = """
                 Команди адміна:
-                /clear round  <індекс_раунду_або_назва> - Видалити все з раунду
-                /clear all rounds - Видалити всі раунди
+                /remove round  <індекс_раунду_або_назва> - Видалити раунд
+                /remove all rounds - Видалити всі раунди
+                /remove place <індекс_раунду_або_назва> <індекс_місця_або_назва> - Видалити місце
+                
                 /rename round <індекс_раунду_або_назва> <нова_назва> - Перейменувати раунд
                 /rename place <індекс_раунду_або_назва> <індекс_місця_або_назва> <нова назва> - Перейменувати місце
                 """;

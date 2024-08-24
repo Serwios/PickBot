@@ -10,6 +10,7 @@ import org.archivision.pickbot.util.TemplateGenerator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -22,11 +23,11 @@ public class RoundInfoHandlerUser implements UserCommandHandler {
     @Override
     public BotResponse handle(Update update, String[] args, Long chatId) {
         if (args.length < 2) {
-            return BotResponse.of(update.getMessage().getChatId(), "Використання: /round <індекс_раунду>");
+            return BotResponse.of(update.getMessage().getChatId(), "Використання: /round <індекс_раунду_або_назва>");
         }
 
-        final Long roundId = Long.parseLong(args[1]);
-        final Optional<Round> roundOpt = roundRepository.findByIdAndChatId(roundId, chatId);
+        String roundIdentifier = args[1];
+        Optional<Round> roundOpt = findRoundByIdentifier(chatId, roundIdentifier);
 
         return roundOpt
                 .map(round -> BotResponse.of(
@@ -36,6 +37,26 @@ public class RoundInfoHandlerUser implements UserCommandHandler {
                         )
                 ))
                 .orElseGet(() -> BotResponse.of(update.getMessage().getChatId(), "Раунд не знайдений"));
+    }
+
+    private Optional<Round> findRoundByIdentifier(Long chatId, String identifier) {
+        if (isNumeric(identifier)) {
+            int ordinalIndex = Integer.parseInt(identifier) - 1;
+            List<Round> rounds = roundRepository.findByChatId(chatId);
+            if (ordinalIndex >= 0 && ordinalIndex < rounds.size()) {
+                return Optional.of(rounds.get(ordinalIndex));
+            }
+        }
+        return roundRepository.findByChatIdAndName(chatId, identifier);
+    }
+
+    private boolean isNumeric(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     @Override

@@ -53,7 +53,7 @@ public class RenameHandlerAdmin implements AdminCommandHandler {
         }
 
         Optional<Round> round = isNumeric(roundIdentifier) ?
-                findRoundByIndex(chatId, Integer.parseInt(roundIdentifier)) :
+                findRoundByIndex(chatId, Integer.parseInt(roundIdentifier) - 1) :
                 roundRepository.findByChatIdAndName(chatId, roundIdentifier);
 
         if (round.isEmpty()) {
@@ -88,7 +88,7 @@ public class RenameHandlerAdmin implements AdminCommandHandler {
         }
 
         Optional<Round> round = isNumeric(roundIdentifier) ?
-                findRoundByIndex(chatId, Integer.parseInt(roundIdentifier)) :
+                findRoundByIndex(chatId, Integer.parseInt(roundIdentifier) - 1) :
                 roundRepository.findByChatIdAndName(chatId, roundIdentifier);
 
         if (round.isEmpty()) {
@@ -96,7 +96,7 @@ public class RenameHandlerAdmin implements AdminCommandHandler {
         }
 
         Optional<Place> place = isNumeric(placeIdentifier) ?
-                findPlaceByIndex(round.get().getId(), Integer.parseInt(placeIdentifier)) :
+                findPlaceByIndex(round.get().getId(), Integer.parseInt(placeIdentifier) - 1) :
                 placeRepository.findByRoundIdAndName(round.get().getId(), placeIdentifier);
 
         if (place.isEmpty()) {

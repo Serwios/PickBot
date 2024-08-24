@@ -9,6 +9,7 @@ import org.archivision.pickbot.util.LevenshteinComparator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isNumeric;
@@ -27,7 +28,7 @@ public class StartRoundHandlerUser implements UserCommandHandler {
             return BotResponse.of(update.getMessage().getChatId(), "Використання: /start <назва_раунду>");
         }
 
-        final String roundName = args[1].trim();
+        final String roundName = toCamelCase(String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim());
 
         if (roundName.isEmpty()) {
             return BotResponse.of(update.getMessage().getChatId(), "Раунд не може бути порожнім або складатися лише з пробілів");
@@ -43,7 +44,7 @@ public class StartRoundHandlerUser implements UserCommandHandler {
         }
 
         for (Round existingRound : existingRounds) {
-            String existingRoundName = existingRound.getName().trim();
+            String existingRoundName = toCamelCase(existingRound.getName().trim());
             if (levenshteinComparator.compare(existingRoundName, roundName)) {
                 return BotResponse.of(update.getMessage().getChatId(), "Раунд з подібною назвою '" + roundName + "' вже існує");
             }
@@ -63,6 +64,20 @@ public class StartRoundHandlerUser implements UserCommandHandler {
         roundRepository.save(round);
 
         return BotResponse.of(update.getMessage().getChatId(), "Раунд '" + roundName + "' розпочався!");
+    }
+
+    private String toCamelCase(String input) {
+        String[] words = input.split("\\s+");
+        StringBuilder camelCaseString = new StringBuilder();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                camelCaseString.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1));
+            }
+        }
+
+        return camelCaseString.toString();
     }
 
     @Override

@@ -12,7 +12,7 @@ public enum Command {
     ROUNDS("/rounds"),
     ROUND("/round"),
     INFO("/info"),
-    CLEAR("/clear"),
+    REMOVE("/remove"),
     RENAME("/rename"),
     ADMIN("/admin");
 
