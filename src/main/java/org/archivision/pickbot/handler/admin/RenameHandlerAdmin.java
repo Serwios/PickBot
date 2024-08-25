@@ -84,7 +84,7 @@ public class RenameHandlerAdmin implements AdminCommandHandler {
         String newName = String.join(" ", Arrays.copyOfRange(args, 4, args.length)).trim();
 
         if (newName.isEmpty() || isNumeric(newName)) {
-            return BotResponse.of(update.getMessage().getChatId(), "Нова назва не може бути порожньою або містити лише числа.");
+            return BotResponse.of(update.getMessage().getChatId(), "Нова назва не може бути порожньою або містити лише числа");
         }
 
         Optional<Round> round = isNumeric(roundIdentifier) ?
@@ -92,7 +92,7 @@ public class RenameHandlerAdmin implements AdminCommandHandler {
                 roundRepository.findByChatIdAndName(chatId, roundIdentifier);
 
         if (round.isEmpty()) {
-            return BotResponse.of(update.getMessage().getChatId(), "Раунд не знайдено.");
+            return BotResponse.of(update.getMessage().getChatId(), "Раунд не знайдено");
         }
 
         Optional<Place> place = isNumeric(placeIdentifier) ?
@@ -100,21 +100,21 @@ public class RenameHandlerAdmin implements AdminCommandHandler {
                 placeRepository.findByRoundIdAndName(round.get().getId(), placeIdentifier);
 
         if (place.isEmpty()) {
-            return BotResponse.of(update.getMessage().getChatId(), "Місце не знайдено.");
+            return BotResponse.of(update.getMessage().getChatId(), "Місце не знайдено");
         }
 
         List<Place> existingPlaces = placeRepository.findByRoundId(round.get().getId());
         for (Place existingPlace : existingPlaces) {
             if (!existingPlace.getId().equals(place.get().getId()) &&
                     levenshteinComparator.compare(existingPlace.getName().trim(), newName)) {
-                return BotResponse.of(update.getMessage().getChatId(), "Місце з такою назвою вже існує.");
+                return BotResponse.of(update.getMessage().getChatId(), "Місце з такою назвою вже існує");
             }
         }
 
         place.get().setName(newName);
         placeRepository.save(place.get());
 
-        return BotResponse.of(update.getMessage().getChatId(), "Місце перейменовано на '" + newName + "'.");
+        return BotResponse.of(update.getMessage().getChatId(), "Місце перейменовано на '" + newName + "'");
     }
 
     private Optional<Round> findRoundByIndex(Long chatId, int index) {

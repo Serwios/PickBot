@@ -1,25 +1,33 @@
 package org.archivision.pickbot.handler.user;
 
+import jakarta.annotation.PostConstruct;
 import org.archivision.pickbot.handler.BotResponse;
 import org.archivision.pickbot.handler.Command;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 @Component
 public class AdminInfoHandlerUser implements UserCommandHandler {
+    private String infoTemplate;
+
+    @PostConstruct
+    public void prepareInfoTemplate() {
+        this.infoTemplate = """
+                Команди Адміна:
+                """ +
+                Arrays.stream(Command.values())
+                        .filter(Command::isAdminCommand)
+                        .map(command -> command.getName() + " " + command.getDescription())
+                        .collect(Collectors.joining("\n"));
+    }
+
+
     @Override
     public BotResponse handle(Update update, String[] args, Long chatId) {
-        final String response = """
-                Команди адміна:
-                /remove round  <індекс_раунду_або_назва> - Видалити раунд
-                /remove all rounds - Видалити всі раунди
-                /remove place <індекс_раунду_або_назва> <індекс_місця_або_назва> - Видалити місце
-                
-                /rename round <індекс_раунду_або_назва> <нова_назва> - Перейменувати раунд
-                /rename place <індекс_раунду_або_назва> <індекс_місця_або_назва> <нова назва> - Перейменувати місце
-                """;
-
-        return BotResponse.of(update.getMessage().getChatId(), response);
+        return BotResponse.of(update.getMessage().getChatId(), infoTemplate);
     }
 
     @Override

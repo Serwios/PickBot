@@ -54,9 +54,18 @@ public class VotingBot extends TelegramLongPollingBot {
     }
 
     private CommandHandler getCommandHandler(Update update, String command) {
+        if (command.contains("@" + botUsername)) {
+            command = removeBotNamePostfix(command);
+        }
+
         return isAdmin(update) ?
                 commandsWrapper.getAdminAndUserCommandsStrategy().get(command) :
                 commandsWrapper.getUserCommandsStrategy().get(command);
+    }
+
+
+    private String removeBotNamePostfix(String command) {
+        return command.substring(0, command.indexOf('@'));
     }
 
     private boolean isAdmin(Update update) {
