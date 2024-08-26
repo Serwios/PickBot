@@ -8,13 +8,16 @@ import org.archivision.pickbot.handler.Command;
 import org.archivision.pickbot.repo.PlaceRepository;
 import org.archivision.pickbot.repo.RoundRepository;
 import org.archivision.pickbot.service.LevenshteinComparator;
+import org.archivision.pickbot.service.Util;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNumeric;
+import static org.archivision.pickbot.service.Util.toCamelCase;
 
 @Component
 @RequiredArgsConstructor
@@ -54,38 +57,36 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
             return BotResponse.of(update.getMessage().getChatId(), getAvailablePlacesResponse(numberOfAvailableWords));
         }
 
-        StringBuilder responseMessage = new StringBuilder();
-        for (String placeName : placeNames) {
-            if (placeName.isEmpty()) continue;
+        return BotResponse.of(update.getMessage().getChatId(), processPlaceNames(update, chatId, placeNames, existingPlaces, activeRound));
+    }
 
-            placeName = toCamelCase(normalizePlaceName(placeName));
+    private String processPlaceNames(Update update, Long chatId, String[] placeNames, List<Place> existingPlaces, Round activeRound) {
+        return Arrays.stream(placeNames)
+                .filter(placeName -> !placeName.isEmpty())
+                .map(placeName -> toCamelCase(normalizePlaceName(placeName)))
+                .map(placeName -> {
+                    if (isNumeric(placeName)) {
+                        return "Місце '" + placeName + "' не може складатися лише з чисел\n";
+                    }
 
-            if (isNumeric(placeName)) {
-                responseMessage.append("Місце '").append(placeName).append("' не може складатися лише з чисел.\n");
-                continue;
-            }
+                    final boolean isDuplicate = existingPlaces.stream()
+                            .anyMatch(existingPlace -> levenshteinComparator.compare(
+                                    toCamelCase(normalizePlaceName(existingPlace.getName())), placeName));
 
-            String finalPlaceName = placeName;
-            boolean isDuplicate = existingPlaces.stream()
-                    .anyMatch(existingPlace -> levenshteinComparator.compare(
-                            toCamelCase(normalizePlaceName(existingPlace.getName())), finalPlaceName));
+                    if (isDuplicate) {
+                        return "Місце з подібною назвою '" + placeName + "' вже існує в цьому раунді\n";
+                    }
 
-            if (isDuplicate) {
-                responseMessage.append("Місце з подібною назвою '").append(placeName).append("' вже існує в цьому раунді.\n");
-                continue;
-            }
+                    Place place = new Place();
+                    place.setName(placeName);
+                    place.setAddedBy(update.getMessage().getFrom().getId());
+                    place.setChatId(chatId);
+                    place.setRound(activeRound);
 
-            Place place = new Place();
-            place.setName(placeName);
-            place.setAddedBy(update.getMessage().getFrom().getId());
-            place.setChatId(chatId);
-            place.setRound(activeRound);
-
-            placeRepository.save(place);
-            responseMessage.append("Місце '").append(placeName).append("' додано до раунду!\n");
-        }
-
-        return BotResponse.of(update.getMessage().getChatId(), responseMessage.toString().trim());
+                    placeRepository.save(place);
+                    return "Місце '" + placeName + "' додано до раунду!\n";
+                })
+                .collect(Collectors.joining());
     }
 
     private String getAvailablePlacesResponse(int numberOfAvailablePlaces) {
@@ -93,13 +94,13 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
             return "Досягнута максимальна кількість місць: " + MAX_PLACES_PER_ROUND;
         }
 
-        return "ВІльних місць: " + numberOfAvailablePlaces;
+        return "Вільних місць: " + numberOfAvailablePlaces;
     }
 
     private boolean hasDuplicates(String[] placeNames) {
-        long uniqueCount = Arrays.stream(placeNames)
+        final long uniqueCount = Arrays.stream(placeNames)
                 .map(this::normalizePlaceName)
-                .map(this::toCamelCase)
+                .map(Util::toCamelCase)
                 .distinct()
                 .count();
         return uniqueCount < placeNames.length;
@@ -113,20 +114,6 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
 
     private String normalizePlaceName(String placeName) {
         return placeName.trim().replaceAll("\\s+", " ");
-    }
-
-    private String toCamelCase(String input) {
-        String[] words = input.split("\\s+");
-        StringBuilder camelCaseString = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                camelCaseString.append(Character.toUpperCase(word.charAt(0)))
-                        .append(word.substring(1));
-            }
-        }
-
-        return camelCaseString.toString();
     }
 
     @Override

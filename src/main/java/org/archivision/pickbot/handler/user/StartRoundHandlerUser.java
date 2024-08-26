@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isNumeric;
+import static org.archivision.pickbot.service.Util.toCamelCase;
 
 @Component
 @RequiredArgsConstructor
@@ -64,20 +65,6 @@ public class StartRoundHandlerUser implements UserCommandHandler {
         roundRepository.save(round);
 
         return BotResponse.of(update.getMessage().getChatId(), "Раунд '" + roundName + "' розпочався!");
-    }
-
-    private String toCamelCase(String input) {
-        String[] words = input.split("\\s+");
-        StringBuilder camelCaseString = new StringBuilder();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                camelCaseString.append(Character.toUpperCase(word.charAt(0)))
-                        .append(word.substring(1));
-            }
-        }
-
-        return camelCaseString.toString();
     }
 
     @Override

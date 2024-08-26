@@ -12,17 +12,16 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @Slf4j
 public class BotRegistrar {
     public void register(LongPollingBot telegramBot) throws TelegramApiException {
-        final TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         try {
             log.info("Registering bot... Username: {}, Token: {}",
                     telegramBot.getBotUsername(),
                     telegramBot.getBotToken()
             );
 
-            telegramBotsApi.registerBot(telegramBot);
+            new TelegramBotsApi(DefaultBotSession.class).registerBot(telegramBot);
             log.info("Telegram bot is ready to accept updates from user");
         } catch (TelegramApiRequestException e) {
-            log.error("Failed to register bot(check internet connection / bot token or make sure only one instance of bot is running). \n" + e);
+            log.error("Failed to register bot(check internet connection / bot token or make sure only one instance of bot is running)", e);
         }
     }
 }

@@ -66,7 +66,7 @@ public class VoteHandlerUser implements UserCommandHandler {
         place.setVotes(place.getVotes() + 1);
         placeRepository.save(place);
 
-        return BotResponse.of(update.getMessage().getChatId(), "Ваш голос за '" + place.getName() + "' був успішно записаний.");
+        return BotResponse.of(update.getMessage().getChatId(), "Ваш голос за '" + place.getName() + "' був успішно записаний");
     }
 
     @Override

@@ -16,7 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.List;
+import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
@@ -28,11 +28,11 @@ public class VotingBot extends TelegramLongPollingBot {
     @Value("${telegram.bot.token}")
     private String botToken;
 
-    private final CommandsWrapper commandsWrapper;
-    private final UserStatService userStatService;
-
     @Value("${developer.name}")
     private String developerName;
+
+    private final CommandsWrapper commandsWrapper;
+    private final UserStatService userStatService;
 
     @Override
     public String getBotUsername() {
@@ -46,16 +46,19 @@ public class VotingBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
+        if (isUpdateValid(update) && isCommand(update)) {
             final String[] args = update.getMessage().getText().split(" ");
             final String command = args[0];
 
-            if (isCommand(update)) {
-                final User user = update.getMessage().getFrom();
-                userStatService.recordInteraction(user.getId(), user.getUserName());
-                executeCommandHandler(update, args, getCommandHandler(update, command));
-            }
+            final User user = update.getMessage().getFrom();
+            userStatService.recordInteraction(user.getId(), user.getUserName());
+
+            executeCommandHandler(update, args, getCommandHandler(update, command));
         }
+    }
+
+    private boolean isUpdateValid(Update update) {
+        return update.hasMessage() && update.getMessage().hasText();
     }
 
     private boolean isCommand(Update update) {
@@ -63,32 +66,39 @@ public class VotingBot extends TelegramLongPollingBot {
     }
 
     private CommandHandler getCommandHandler(Update update, String command) {
-        if (command.contains("@" + botUsername)) {
+        if (containsBotNamePostfix(command)) {
             command = removeBotNamePostfix(command);
         }
 
-        if (update.getMessage().getFrom().getUserName().equals(developerName)) {
+        if (isFromDeveloper(update)) {
             return commandsWrapper.getDeveloperCommandStrategy().get(command);
         }
 
-        return isAdmin(update) ?
+        return isFromAdmin(update) ?
                 commandsWrapper.getAdminAndUserCommandsStrategy().get(command) :
                 commandsWrapper.getUserCommandsStrategy().get(command);
     }
 
+    private boolean containsBotNamePostfix(String command) {
+        return command.contains("@" + botUsername);
+    }
 
     private String removeBotNamePostfix(String command) {
         return command.substring(0, command.indexOf('@'));
     }
 
-    private boolean isAdmin(Update update) {
+    private boolean isFromDeveloper(Update update) {
+        return update.getMessage().getFrom().getUserName().equals(developerName);
+    }
+
+    private boolean isFromAdmin(Update update) {
         try {
             final GetChatAdministrators getChatAdmins = new GetChatAdministrators();
             getChatAdmins.setChatId(update.getMessage().getChatId());
 
-            final List<ChatMember> administrators = execute(getChatAdmins);
-            for (ChatMember member : administrators) {
-                if (member.getUser().getId().equals(update.getMessage().getFrom().getId())) {
+            final ArrayList<ChatMember> adminChatMembers = execute(getChatAdmins);
+            for (ChatMember admin : adminChatMembers) {
+                if (isUpdateFromChatMember(update, admin)) {
                     return true;
                 }
             }
@@ -99,13 +109,13 @@ public class VotingBot extends TelegramLongPollingBot {
         return false;
     }
 
+    private boolean isUpdateFromChatMember(Update update, ChatMember member) {
+        return member.getUser().getId().equals(update.getMessage().getFrom().getId());
+    }
+
     private void executeCommandHandler(Update update, String[] args, CommandHandler commandHandler) {
         if (commandHandler != null) {
-            BotResponse handle = commandHandler.handle(update, args, update.getMessage().getChatId());
-
-            if (handle.message() != null) {
-                sendMsg(handle);
-            }
+            sendMsg(commandHandler.handle(update, args, update.getMessage().getChatId()));
         } else {
             sendMsg(BotResponse.of(update.getMessage().getChatId(), "Такої команди немає, або вона вам недоступна"));
         }
