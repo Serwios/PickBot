@@ -31,14 +31,15 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
             return BotResponse.of(update.getMessage().getChatId(), "Використання: /add <місце>");
         }
 
-        final String placeName = toCamelCase(normalizePlaceName(String.join(" ", Arrays.copyOfRange(args, 1, args.length))));
+        final String rawInput = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+        final String[] placeNames = parsePlaceNames(rawInput);
 
-        if (placeName.isEmpty()) {
+        if (placeNames.length == 0) {
             return BotResponse.of(update.getMessage().getChatId(), "Місце не може бути порожнім або складатися лише з пробілів");
         }
 
-        if (isNumeric(placeName)) {
-            return BotResponse.of(update.getMessage().getChatId(), "Місце не може складатися лише з чисел");
+        if (hasDuplicates(placeNames)) {
+            return BotResponse.of(update.getMessage().getChatId(), "У списку місць є дублікати. Будь ласка, видаліть повторювані місця");
         }
 
         final Round activeRound = roundRepository.findTopByStatusAndChatIdOrderByStartedAtDesc(Round.Status.ACTIVE, chatId);
@@ -47,26 +48,67 @@ public class AddPlaceHandlerUser implements UserCommandHandler {
         }
 
         final List<Place> existingPlaces = placeRepository.findByRoundId(activeRound.getId());
-        if (existingPlaces.size() >= MAX_PLACES_PER_ROUND) {
-            return BotResponse.of(update.getMessage().getChatId(), "До раунду не можна додати більше ніж " + MAX_PLACES_PER_ROUND + " місця");
+        final int numberOfNewWords = args.length - 1;
+        final int numberOfAvailableWords = MAX_PLACES_PER_ROUND - existingPlaces.size();
+        if (existingPlaces.size() + numberOfNewWords > MAX_PLACES_PER_ROUND) {
+            return BotResponse.of(update.getMessage().getChatId(), getAvailablePlacesResponse(numberOfAvailableWords));
         }
 
-        for (Place existingPlace : existingPlaces) {
-            String existingPlaceName = toCamelCase(normalizePlaceName(existingPlace.getName()));
-            if (levenshteinComparator.compare(existingPlaceName, placeName)) {
-                return BotResponse.of(update.getMessage().getChatId(), "Місце з подібною назвою '" + placeName + "' вже існує в цьому раунді");
+        StringBuilder responseMessage = new StringBuilder();
+        for (String placeName : placeNames) {
+            if (placeName.isEmpty()) continue;
+
+            placeName = toCamelCase(normalizePlaceName(placeName));
+
+            if (isNumeric(placeName)) {
+                responseMessage.append("Місце '").append(placeName).append("' не може складатися лише з чисел.\n");
+                continue;
             }
+
+            String finalPlaceName = placeName;
+            boolean isDuplicate = existingPlaces.stream()
+                    .anyMatch(existingPlace -> levenshteinComparator.compare(
+                            toCamelCase(normalizePlaceName(existingPlace.getName())), finalPlaceName));
+
+            if (isDuplicate) {
+                responseMessage.append("Місце з подібною назвою '").append(placeName).append("' вже існує в цьому раунді.\n");
+                continue;
+            }
+
+            Place place = new Place();
+            place.setName(placeName);
+            place.setAddedBy(update.getMessage().getFrom().getId());
+            place.setChatId(chatId);
+            place.setRound(activeRound);
+
+            placeRepository.save(place);
+            responseMessage.append("Місце '").append(placeName).append("' додано до раунду!\n");
         }
 
-        Place place = new Place();
-        place.setName(placeName);
-        place.setAddedBy(update.getMessage().getFrom().getId());
-        place.setChatId(chatId);
-        place.setRound(activeRound);
+        return BotResponse.of(update.getMessage().getChatId(), responseMessage.toString().trim());
+    }
 
-        placeRepository.save(place);
+    private String getAvailablePlacesResponse(int numberOfAvailablePlaces) {
+        if (numberOfAvailablePlaces == 0) {
+            return "Досягнута максимальна кількість місць: " + MAX_PLACES_PER_ROUND;
+        }
 
-        return BotResponse.of(update.getMessage().getChatId(), "Місце '" + placeName + "' додано до раунду!");
+        return "ВІльних місць: " + numberOfAvailablePlaces;
+    }
+
+    private boolean hasDuplicates(String[] placeNames) {
+        long uniqueCount = Arrays.stream(placeNames)
+                .map(this::normalizePlaceName)
+                .map(this::toCamelCase)
+                .distinct()
+                .count();
+        return uniqueCount < placeNames.length;
+    }
+
+    private String[] parsePlaceNames(String rawInput) {
+        return rawInput.contains(",")
+                ? rawInput.split("\\s*,\\s*")
+                : new String[]{rawInput};
     }
 
     private String normalizePlaceName(String placeName) {

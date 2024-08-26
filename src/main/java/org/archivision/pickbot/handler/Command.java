@@ -5,7 +5,7 @@ import lombok.Getter;
 @Getter
 public enum Command {
     START_ROUND("/start", "<назва_раунду> - Розпочати новий раунд голосування", false),
-    ADD_PLACE("/add", "<назва_місця> - Додати місце до активного раунду", false),
+    ADD_PLACE("/add", "<назва_місця>, <назва_іншого_місця> - Додати місця до активного раунду", false),
     LIST_PLACES("/list", "Cписок місць у поточному раунді", false),
     VOTE("/vote", "<назва_місця_або_індекс> - Проголосувати за місце", false),
     END_ROUND("/end", "Завершити раунд голосування", false),

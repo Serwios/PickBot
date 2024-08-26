@@ -51,9 +51,9 @@ public class RemoveHandlerAdmin implements AdminCommandHandler {
         if (round.isPresent()) {
             placeRepository.deleteByRoundId(round.get().getId());
             roundRepository.delete(round.get());
-            return BotResponse.of(update.getMessage().getChatId(), "Раунд '" + round.get().getName() + "' і його місця видалено.");
+            return BotResponse.of(update.getMessage().getChatId(), "Раунд '" + round.get().getName() + "' і його місця видалено");
         } else {
-            return BotResponse.of(update.getMessage().getChatId(), "Раунд не знайдено.");
+            return BotResponse.of(update.getMessage().getChatId(), "Раунд не знайдено");
         }
     }
 
@@ -70,12 +70,12 @@ public class RemoveHandlerAdmin implements AdminCommandHandler {
             Optional<Place> place = findPlaceByIdentifier(round.get().getId(), placeIdentifier);
             if (place.isPresent()) {
                 placeRepository.delete(place.get());
-                return BotResponse.of(update.getMessage().getChatId(), "Місце '" + place.get().getName() + "' видалено.");
+                return BotResponse.of(update.getMessage().getChatId(), "Місце '" + place.get().getName() + "' видалено");
             } else {
-                return BotResponse.of(update.getMessage().getChatId(), "Місце не знайдено.");
+                return BotResponse.of(update.getMessage().getChatId(), "Місце не знайдено");
             }
         } else {
-            return BotResponse.of(update.getMessage().getChatId(), "Раунд не знайдено.");
+            return BotResponse.of(update.getMessage().getChatId(), "Раунд не знайдено");
         }
     }
 

@@ -11,7 +11,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TemplateGenerator {
     public String parsePlacesToResponseTemplate(List<Place> places) {
-        final StringBuilder response = new StringBuilder("Місця в активному раунді:\n");
+        final StringBuilder response = new StringBuilder("Місця в раунді:\n");
 
         for (int i = 0; i < places.size(); i++) {
             Place place = places.get(i);
