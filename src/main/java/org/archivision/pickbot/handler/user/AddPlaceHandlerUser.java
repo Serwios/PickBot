@@ -7,7 +7,7 @@ import org.archivision.pickbot.handler.BotResponse;
 import org.archivision.pickbot.handler.Command;
 import org.archivision.pickbot.repo.PlaceRepository;
 import org.archivision.pickbot.repo.RoundRepository;
-import org.archivision.pickbot.util.LevenshteinComparator;
+import org.archivision.pickbot.service.LevenshteinComparator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 

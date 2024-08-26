@@ -22,6 +22,7 @@ public class BotInfoHandlerUser implements UserCommandHandler {
                 """ +
                 Arrays.stream(Command.values())
                         .filter(command -> !command.isAdminCommand())
+                        .filter(command -> !command.isDeveloperCommand())
                         .map(command -> command.getName() + " " + command.getDescription())
                         .collect(Collectors.joining("\n"));
     }

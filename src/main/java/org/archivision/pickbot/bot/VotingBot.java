@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.archivision.pickbot.handler.BotResponse;
 import org.archivision.pickbot.handler.CommandHandler;
 import org.archivision.pickbot.handler.CommandsWrapper;
+import org.archivision.pickbot.service.UserStatService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMember;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
@@ -20,7 +22,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class VotingBot extends TelegramLongPollingBot {
-
     @Value("${telegram.bot.username}")
     private String botUsername;
 
@@ -28,6 +29,10 @@ public class VotingBot extends TelegramLongPollingBot {
     private String botToken;
 
     private final CommandsWrapper commandsWrapper;
+    private final UserStatService userStatService;
+
+    @Value("${developer.name}")
+    private String developerName;
 
     @Override
     public String getBotUsername() {
@@ -45,7 +50,11 @@ public class VotingBot extends TelegramLongPollingBot {
             final String[] args = update.getMessage().getText().split(" ");
             final String command = args[0];
 
-            if (isCommand(update)) executeCommandHandler(update, args, getCommandHandler(update, command));
+            if (isCommand(update)) {
+                final User user = update.getMessage().getFrom();
+                userStatService.recordInteraction(user.getId(), user.getUserName());
+                executeCommandHandler(update, args, getCommandHandler(update, command));
+            }
         }
     }
 
@@ -56,6 +65,10 @@ public class VotingBot extends TelegramLongPollingBot {
     private CommandHandler getCommandHandler(Update update, String command) {
         if (command.contains("@" + botUsername)) {
             command = removeBotNamePostfix(command);
+        }
+
+        if (update.getMessage().getFrom().getUserName().equals(developerName)) {
+            return commandsWrapper.getDeveloperCommandStrategy().get(command);
         }
 
         return isAdmin(update) ?
@@ -88,7 +101,11 @@ public class VotingBot extends TelegramLongPollingBot {
 
     private void executeCommandHandler(Update update, String[] args, CommandHandler commandHandler) {
         if (commandHandler != null) {
-            sendMsg(commandHandler.handle(update, args, update.getMessage().getChatId()));
+            BotResponse handle = commandHandler.handle(update, args, update.getMessage().getChatId());
+
+            if (handle.message() != null) {
+                sendMsg(handle);
+            }
         } else {
             sendMsg(BotResponse.of(update.getMessage().getChatId(), "Такої команди немає, або вона вам недоступна"));
         }

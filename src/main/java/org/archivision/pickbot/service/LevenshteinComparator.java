@@ -1,4 +1,4 @@
-package org.archivision.pickbot.util;
+package org.archivision.pickbot.service;
 
 import org.springframework.stereotype.Component;
 

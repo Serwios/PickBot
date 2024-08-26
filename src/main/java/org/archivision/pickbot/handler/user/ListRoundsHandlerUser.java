@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.archivision.pickbot.handler.BotResponse;
 import org.archivision.pickbot.handler.Command;
 import org.archivision.pickbot.repo.RoundRepository;
-import org.archivision.pickbot.util.TemplateGenerator;
+import org.archivision.pickbot.service.TemplateGenerator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
