@@ -23,6 +23,8 @@ public class Round {
     private LocalDateTime startedAt = LocalDateTime.now();
     private LocalDateTime endedAt;
 
+    private LocalDateTime endAt;
+
     private Long chatId;
 
     @OneToMany(mappedBy = "round", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

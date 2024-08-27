@@ -121,7 +121,7 @@ public class VotingBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendMsg(BotResponse botResponse) {
+    public void sendMsg(BotResponse botResponse) {
         final SendMessage message = new SendMessage();
         message.setChatId(botResponse.chatId());
         message.setText(botResponse.message());

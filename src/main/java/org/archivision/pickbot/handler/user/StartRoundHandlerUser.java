@@ -9,6 +9,7 @@ import org.archivision.pickbot.service.LevenshteinComparator;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,13 +27,26 @@ public class StartRoundHandlerUser implements UserCommandHandler {
     @Override
     public BotResponse handle(Update update, String[] args, Long chatId) {
         if (args.length < 2) {
-            return BotResponse.of(update.getMessage().getChatId(), "Використання: /start <назва_раунду>");
+            return BotResponse.of(update.getMessage().getChatId(), "Використання: /start <назва_раунду> [тайм_аут_в_годинах]");
         }
 
-        final String roundName = toCamelCase(String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim());
-
+        String roundName = toCamelCase(String.join(" ", Arrays.copyOfRange(args, 1, args.length)).trim());
         if (roundName.isEmpty()) {
             return BotResponse.of(update.getMessage().getChatId(), "Раунд не може бути порожнім або складатися лише з пробілів");
+        }
+
+        Integer timeoutInHours = null;
+        if (isNumeric(args[args.length - 1])) {
+            try {
+                timeoutInHours = Integer.parseInt(args[args.length - 1]);
+                roundName = toCamelCase(String.join(" ", Arrays.copyOfRange(args, 1, args.length - 1)).trim());
+            } catch (NumberFormatException e) {
+                return BotResponse.of(update.getMessage().getChatId(), "Часовий інтервал повинен бути числом");
+            }
+        }
+
+        if (timeoutInHours != null && timeoutInHours <= 0) {
+            return BotResponse.of(update.getMessage().getChatId(), "Часовий інтервал повинен бути більше нуля");
         }
 
         if (isNumeric(roundName)) {
@@ -53,7 +67,7 @@ public class StartRoundHandlerUser implements UserCommandHandler {
 
         final Round activeRound = roundRepository.findTopByStatusAndChatIdOrderByStartedAtDesc(Round.Status.ACTIVE, chatId);
         if (activeRound != null) {
-            return BotResponse.of(update.getMessage().getChatId(), "Не можна розпочати новий раунд, поки попередній не завершено.");
+            return BotResponse.of(update.getMessage().getChatId(), "Не можна розпочати новий раунд, поки попередній не завершено");
         }
 
         final Round round = new Round();
@@ -62,9 +76,15 @@ public class StartRoundHandlerUser implements UserCommandHandler {
         round.setStartedBy(update.getMessage().getFrom().getId());
         round.setStatus(Round.Status.ACTIVE);
 
+        if (timeoutInHours != null) {
+            round.setEndAt(LocalDateTime.now().plusHours(timeoutInHours));
+        }
+
         roundRepository.save(round);
 
-        return BotResponse.of(update.getMessage().getChatId(), "Раунд '" + roundName + "' розпочався!");
+        final String timeOutResponse = timeoutInHours == null ? "" : "\nТайм-аут в годинах: " + timeoutInHours;
+
+        return BotResponse.of(update.getMessage().getChatId(), "Раунд '" + roundName + "' розпочався!" + timeOutResponse);
     }
 
     @Override
