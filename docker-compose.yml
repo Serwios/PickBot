@@ -1,0 +1,22 @@
+version: '1'
+services:
+  app:
+    image: overpathz/pickbot
+    build: .
+    container_name: pickbot-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    volumes:
+      - ./logs:/app/logs
+
+  db:
+    image: 'postgres:13.1-alpine'
+    container_name: db
+    environment:
+      - POSTGRES_DB=x
+      - POSTGRES_USER=x
+      - POSTGRES_PASSWORD=x
+    ports:
+      - "5432:5432"
