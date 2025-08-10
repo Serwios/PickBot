@@ -12,12 +12,11 @@ PickBot is a custom Telegram bot designed to facilitate interactive polls within
 
 ## ⚙️ Features
 
-- **Customizable Poll Options**: Users can define specific options for each poll, providing flexibility beyond Telegram's default settings.
+- **Customizable Poll Options**: Users can define specific options for each poll, providing flexibility beyond Telegram's default settings. For example - You can set end time when polling will automatically close
 - **User Interaction Tracking**: The bot can track and display user participation, offering insights into engagement levels.
 - **Admin Controls**: Administrators have the ability to manage polls, including starting, ending, and deleting polls as needed.
 - **Persistent Polling**: Polls remain active until manually closed, ensuring that users can participate at their convenience.
 - **Multilingual Support**: The bot supports multiple languages, making it accessible to a global audience.
-- **Time-out for polling**: You can set end time when polling will automatically close
 
 ---
 
