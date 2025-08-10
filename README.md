@@ -34,17 +34,9 @@ To deploy PickBot, follow these steps:
 In .env set TELEGRAM_API_TOKEN=your_telegram_bot_token
 
 3. **Build and run app**
-Using Maven:
-
-mvn clean install
-mvn exec:java
-
-Alternatively, using Docker:
-
 docker-compose up --build
 
-4. **Access the Bot**:
-
+5. **Access the Bot**:
 Start a chat with your bot on Telegram and follow the on-screen instructions to create and manage polls.
 
 
